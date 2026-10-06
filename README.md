@@ -26,28 +26,38 @@ follow from that.
 
 ---
 
-## A look at it
+## Screenshots
 
 ### The dashboard
 
 Site health, Search Console figures, the single highest-value thing to fix, and
 every page that needs work — worst first, each one a link.
 
+![The Magna SEO dashboard](art/screenshots/dashboard.jpg)
+
 ### Live analysis while you write
 
-Two scores that move as you type, the words the page is actually about, and a
-pixel-accurate preview of the Google result. The same PHP analyser runs here and
-in the scan, so the editor can never disagree with the report.
+Two scores that move as you type, the words the page is actually about, and every
+check with its fix written beside it. Below these sits a pixel-accurate preview of
+the Google result — measured in pixels, because Google truncates by width, not by
+character count. The same PHP analyser runs here and in the scan, so the editor can
+never disagree with the report.
+
+![The SEO panel in the post editor](art/screenshots/editor-panel.jpg)
 
 ### Every page and its SEO state
 
 Titles and meta descriptions editable in place — because nobody fixes two hundred
 missing descriptions by opening two hundred editors.
 
+![The SEO content list](art/screenshots/content.jpg)
+
 ### Settings
 
 Site identity, templates per content type, AI crawler policy, Search Console and
 IndexNow — all in one place.
+
+![SEO settings](art/screenshots/settings.jpg)
 
 ---
 
@@ -266,8 +276,6 @@ external tool agrees:
       URL resolution currently runs through a config-driven resolver.
 - [ ] **Manual visual verification** of the admin screens is incomplete after the
       most recent dashboard changes.
-- [ ] **Screenshots** for this README. The sections above describe each screen;
-      the images belong in `art/screenshots/`.
 
 ### Roadmap
 
