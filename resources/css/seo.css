@@ -1,0 +1,123 @@
+/*
+ * Utility classes the SEO plugin's views need and the host application does not
+ * already ship.
+ *
+ * Why this file exists: a Tailwind build only emits classes it can see, and the
+ * host scans its own source, not installed plugins'. On a distributed Magna
+ * install there is no npm and no way to re-run that build, so any class the core
+ * app happens not to use is simply absent — and the view silently renders
+ * unstyled. That is exactly what happened here: responsive grids collapsed to
+ * one column, score dots lost their colour, and the setup and queue banners lost
+ * their tint, with nothing to indicate anything was wrong.
+ *
+ * So the plugin ships its own. Every rule below is a faithful copy of Tailwind's
+ * own definition, written against Filament's palette variables so it follows the
+ * panel's theme rather than hard-coding one. Where the host build does provide a
+ * class, the duplicate is harmless: same selector, same declarations.
+ *
+ * Adding a new class to a plugin view means checking it renders on a stock
+ * install, or adding it here. AdminStylesheetTest keeps the two from drifting.
+ */
+
+@layer components {
+    /* ── Layout ─────────────────────────────────────────────────────────────── */
+
+    .mt-8 { margin-top: calc(var(--spacing) * 8); }
+    .max-w-prose { max-width: 65ch; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .space-y-1 > :not([hidden]) ~ :not([hidden]) { margin-top: calc(var(--spacing) * 1); }
+
+    /* ── Plugin-owned components ────────────────────────────────────────────── */
+
+    /* Rules in this layer cannot beat a utility the host build does ship, so
+       anything that needs to override one gets its own class instead. The
+       content list's search field is the case: `w-full sm:w-64` left it full
+       width at every size, because `w-full` is a host utility and the `sm:w-64`
+       here sits in a lower layer. A name no host build defines has nothing to
+       lose to. */
+    .magna-seo-search { width: 100%; }
+
+    @media (width >= 40rem) {
+        .magna-seo-search { width: calc(var(--spacing) * 64); }
+    }
+
+    /* A shell command shown for the reader to copy.
+       Owns its colours for the same reason: `bg-warning-100` is a host utility,
+       so a `dark:bg-black/20` here could not override it and the command sat as
+       pale text on a pale background, unreadable in dark mode. `inline-block` is
+       not in the host build at all, so the padding had no effect on a <code>
+       element either. */
+    .magna-seo-command {
+        display: inline-block;
+        padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2.5);
+        border-radius: calc(var(--radius-xl) * 0.5);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        line-height: 1.25rem;
+        background-color: color-mix(in oklab, var(--warning-800) 12%, transparent);
+        color: var(--warning-900);
+        user-select: all;
+    }
+
+    :is(.dark .magna-seo-command) {
+        background-color: rgba(0, 0, 0, 0.35);
+        color: var(--warning-200);
+    }
+
+    @media (width >= 40rem) {
+        .sm\:justify-between { justify-content: space-between; }
+
+        /* Title, description, save — the content list's inline editor. Collapsing
+           this to one column is what turned every row into a stack with a
+           full-width primary button. */
+        .sm\:grid-cols-\[1fr_2fr_auto\] { grid-template-columns: 1fr 2fr auto; }
+    }
+
+    /* ── SERP preview ───────────────────────────────────────────────────────── */
+
+    /* These are Google's own colours and proportions, not the panel's, so they
+       are literal on purpose: a preview of a search result is only useful if it
+       looks like one. The theme palette must not reach in here. */
+    .text-\[\#1a0dab\] { color: #1a0dab; }
+    .text-\[11px\] { font-size: 11px; }
+    .aspect-\[1\.91\/1\] { aspect-ratio: 1.91 / 1; }
+
+    :is(.dark .dark\:text-\[\#8ab4f8\]) { color: #8ab4f8; }
+
+    /* ── Text ───────────────────────────────────────────────────────────────── */
+
+    .text-gray-950 { color: var(--gray-950); }
+    .text-warning-800 { color: var(--warning-800); }
+
+    :is(.dark .dark\:text-warning-300) { color: var(--warning-300); }
+
+    /* ── Score and severity dots ────────────────────────────────────────────── */
+
+    .bg-gray-300 { background-color: var(--gray-300); }
+    .bg-danger-500 { background-color: var(--danger-500); }
+    .bg-success-500 { background-color: var(--success-500); }
+
+    :is(.dark .dark\:bg-gray-600) { background-color: var(--gray-600); }
+
+    /* ── Banners: setup, and the stalled-queue warning ──────────────────────── */
+
+    .border-warning-300 { border-color: var(--warning-300); }
+
+    :is(.dark .dark\:border-warning-500\/30) { border-color: color-mix(in oklab, var(--warning-500) 30%, transparent); }
+    :is(.dark .dark\:bg-warning-400\/10) { background-color: color-mix(in oklab, var(--warning-400) 10%, transparent); }
+    :is(.dark .dark\:bg-black\/20) { background-color: color-mix(in oklab, #000 20%, transparent); }
+
+    /* ── Fields and buttons ─────────────────────────────────────────────────── */
+
+    /* A description field with nothing in it is the single most common thing this
+       plugin is opened to fix, so it is outlined rather than left to blend in. */
+    .border-danger-400 { border-color: var(--danger-400); }
+
+    :is(.dark .dark\:border-danger-500\/50) { border-color: color-mix(in oklab, var(--danger-500) 50%, transparent); }
+
+    .hover\:bg-primary-500:hover { background-color: var(--primary-500); }
+
+    /* ── Dividers ───────────────────────────────────────────────────────────── */
+
+    :is(.dark .dark\:divide-gray-800) > :not([hidden]) ~ :not([hidden]) { border-color: var(--gray-800); }
+}

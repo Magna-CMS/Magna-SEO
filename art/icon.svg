@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0F19" />
+      <stop offset="50%" stop-color="#111827" />
+      <stop offset="100%" stop-color="#080C14" />
+    </linearGradient>
+
+    <!-- Vibrant Brand Gradients -->
+    <linearGradient id="mGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="50%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#8B5CF6" />
+    </linearGradient>
+
+    <linearGradient id="growthGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="50%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#6EE7B7" />
+    </linearGradient>
+
+    <linearGradient id="lensRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#6366F1" />
+    </linearGradient>
+
+    <!-- Glow & Shadow Filters -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="subtleShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- Base App Tile -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect width="508" height="508" x="2" y="2" rx="110" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="2" />
+
+  <!-- Subtle SEO Analytics Grid Elements -->
+  <g opacity="0.15" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="4 6">
+    <line x1="80" y1="380" x2="432" y2="380" />
+    <line x1="80" y1="300" x2="432" y2="300" />
+    <line x1="80" y1="220" x2="432" y2="220" />
+    <line x1="80" y1="140" x2="432" y2="140" />
+  </g>
+
+  <!-- Central "M" Monogram & SEO Performance Bars -->
+  <g filter="url(#subtleShadow)">
+    <!-- Left Pillar (Base Rank Bar) -->
+    <path d="M120 380 V220 C120 206.745 130.745 196 144 196 H160 C173.255 196 184 206.745 184 220 V380 H120Z" fill="url(#mGrad)" opacity="0.85" />
+
+    <!-- Center Left Diagonal Vector -->
+    <path d="M164 210 L240 316 C247 325.5 261 326 268 317 L304 272 C310 264.5 321.5 264.5 327.5 272 L368 322 V380 H320 L288 340 L256 380 L164 252 V210Z" fill="url(#mGrad)" opacity="0.95" />
+
+    <!-- Center Optimization Node -->
+    <circle cx="256" cy="340" r="7" fill="#6EE7B7" filter="url(#glow)" />
+  </g>
+
+  <!-- SEO Search Lens & Upward Arrow Integration -->
+  <g filter="url(#glow)">
+    <!-- Magnifying Glass Lens Outer Ring -->
+    <circle cx="340" cy="180" r="76" fill="none" stroke="url(#lensRingGrad)" stroke-width="20" stroke-linecap="round" />
+
+    <!-- Lens Glass Background Glow -->
+    <circle cx="340" cy="180" r="66" fill="#6366F1" fill-opacity="0.12" />
+
+    <!-- Magnifying Glass Handle / Dynamic Growth Beam -->
+    <path d="M286 234 L214 306" stroke="url(#lensRingGrad)" stroke-width="22" stroke-linecap="round" />
+
+    <!-- Upward Growth Arrow (Inside Search Hub) -->
+    <path d="M312 208 L368 152 M368 152 H324 M368 152 V196" stroke="url(#growthGrad)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- Top-Rank Star / Sparkle Indicator -->
+  <path d="M396 90 L400 106 L416 110 L400 114 L396 130 L392 114 L376 110 L392 106 Z" fill="#FACC15" filter="url(#glow)" />
+</svg>

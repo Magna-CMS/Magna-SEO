@@ -1,0 +1,29 @@
+{
+    "name": "magna-cms/seo",
+    "displayName": "Magna SEO",
+    "description": "One SEO layer for every surface — rendered pages, docs, and the delivery API. Titles, descriptions, canonicals, robots, Open Graph, Twitter cards, JSON-LD structured data, XML sitemaps and redirects.",
+    "version": "1.1.0",
+    "author": "Magna Team",
+    "license": "MIT",
+    "icon": "art/icon.svg",
+    "compat": {
+        "magna": "^1.0",
+        "php": "^8.3"
+    },
+    "entry": "Magna\\Seo\\SeoPlugin",
+    "provides": {
+        "apiRoutes": true,
+        "adminNavigation": true
+    },
+    "permissions": [
+        "seo.meta.edit",
+        "seo.settings.manage",
+        "seo.redirects.manage",
+        "seo.scans.run",
+        "seo.integrations.manage"
+    ],
+    "uninstall": {
+        "tables": ["seo_not_found_log", "seo_redirects", "seo_scan_issues", "seo_scans", "magna_seo_meta"],
+        "contentTypes": []
+    }
+}

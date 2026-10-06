@@ -1,0 +1,44 @@
+{
+    "name": "magna-cms/seo",
+    "description": "SEO for Magna CMS — one meta layer for rendered HTML and the delivery API: titles, descriptions, canonicals, robots, Open Graph, Twitter, JSON-LD, sitemaps and redirects, correct by construction.",
+    "type": "magna-plugin",
+    "keywords": [
+        "magna", "magna-cms", "seo", "cms", "laravel", "plugin",
+        "sitemap", "schema", "structured-data", "open-graph"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Magna Team",
+            "email": "jishnurajm@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "magna-cms/plugin-sdk": "^1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Magna\\Seo\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Magna\\Seo\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.x-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
