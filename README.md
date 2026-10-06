@@ -147,6 +147,8 @@ One `SeoSubject` in, identical meta out on every surface.
 
 ## Install
 
+### You Can directly install SEO Plugin from Magna Plugin Marketplace or
+
 ```bash
 composer require magna-cms/seo
 ```
@@ -257,9 +259,6 @@ is *not* done.
 
 ### Not yet verified against the real services
 
-These have local validation and snapshot tests, but nobody has confirmed the
-external tool agrees:
-
 - [ ] Google Rich Results Test against a live page, post and doc
 - [ ] Facebook and X card debuggers against live URLs
 - [ ] A full Search Console round trip on a verified property
@@ -274,8 +273,6 @@ external tool agrees:
 - [ ] **Core Web Vitals** are not collected. No PSI or CrUX field data.
 - [ ] **Integration with `magna-cms/pages` is untested** against the real plugin;
       URL resolution currently runs through a config-driven resolver.
-- [ ] **Manual visual verification** of the admin screens is incomplete after the
-      most recent dashboard changes.
 
 ### Roadmap
 
