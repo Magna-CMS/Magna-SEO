@@ -5,14 +5,14 @@
 <h1 align="center">Magna SEO</h1>
 
 <p align="center">
-  One SEO layer for every surface a <strong>Magna CMS</strong> site exposes.
+  <strong>Magna SEO is the SEO plugin for <a href="https://github.com/Magna-CMS/Magna">Magna CMS</a></strong> —<br>
+  one SEO layer for every surface a Magna CMS site exposes.
 </p>
 
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
   <a href="composer.json"><img alt="PHP" src="https://img.shields.io/badge/php-%5E8.3-777bb4.svg"></a>
-  <a href="https://github.com/Magna-CMS"><img alt="Magna CMS" src="https://img.shields.io/badge/Magna%20CMS-%5E1.0-6366f1.svg"></a>
-  <img alt="Tests" src="https://img.shields.io/badge/tests-687%20passing-22c55e.svg">
+  <a href="https://github.com/Magna-CMS/Magna"><img alt="Magna CMS" src="https://img.shields.io/badge/Magna%20CMS-%5E1.0-6366f1.svg"></a>
 </p>
 
 Server-rendered HTML, the delivery JSON API and XML sitemaps are all driven from a
@@ -64,14 +64,14 @@ IndexNow — all in one place.
 ## What it does
 
 **Meta, everywhere, once.** Title and description templates with tokens
-(`%%title%%`, `%%sitename%%`, `%%sep%%`, `%%excerpt%%`, `%%category%%`, `%%date%%`,
-`%%locale%%`, plus tokens a source registers itself), per-content-type defaults and
-per-entity overrides. The resolved result renders into `<head>`, into the delivery
-API payload, and into sitemaps from the same call.
+(`%%title%%`, `%%sitename%%`, `%%sep%%`, `%%excerpt%%`, `%%date%%`, `%%locale%%`),
+per-content-type defaults and per-entity overrides. The resolved result renders
+into `<head>`, into the delivery API payload, and into sitemaps from the same call.
 
 **Indexability you can trust.** Drafts, scheduled content, maintenance mode, the
-not-found page, non-production environments and preview-token requests are all
-`noindex` by construction, not by remembering to tick a box.
+not-found page, non-production environments (on by default, configurable) and
+preview-token requests are all `noindex` by construction, not by remembering to
+tick a box.
 
 **Social cards.** Open Graph and Twitter, with `og:image:width` and
 `og:image:height` read from the media library — the single most common reason a
@@ -89,8 +89,8 @@ paginated at 5 000 URLs, `lastmod` from real content change, image entries, gzip
 and tagged-cache purge. `robots.txt` generated with a static-file conflict check.
 Reciprocal hreflang across translations.
 
-**Redirects and 404s.** Exact, prefix and regex matching with 301/302/307/308,
-query preservation, loop and chain detection, and a logged 404 list you can turn
+**Redirects and 404s.** Exact and regex matching (regex capture groups usable as
+`$1`, `$2`, …), 301/302/307/308, query preservation, loop and chain detection, and a logged 404 list you can turn
 into a redirect in one click. Runs as global middleware, so a URL with no route at
 all is still caught.
 
@@ -107,7 +107,8 @@ and robots/sitemap conflicts. Findings group by page, and each one links to wher
 it can be cleared across the whole site.
 
 **Search engines.** Search Console (cached, never blocking a render), IndexNow
-with batched submission, and Bing Webmaster. Credentials are stored encrypted.
+with batched submission, Bing Webmaster, and optional Core Web Vitals field data
+from the Chrome UX Report. Credentials are stored encrypted.
 
 **AI platforms.** `llms.txt` and `llms-full.txt`, plus per-crawler policy for
 `GPTBot`, `ClaudeBot`, `PerplexityBot`, `Google-Extended`, `Applebot-Extended` and
@@ -144,21 +145,21 @@ One `SeoSubject` in, identical meta out on every surface.
 | PHP | `^8.3` |
 | Magna CMS | `^1.0` |
 | Database | Anything Laravel supports |
+| Queue worker | Recommended — `seo:scan --queue` and the admin's scan button dispatch jobs |
 
 ## Install
 
-### You Can directly install SEO Plugin from Magna Plugin Marketplace or
+You can install Magna SEO from the Magna plugin marketplace in the admin panel, or
+with Composer from the root of your Magna CMS installation:
 
 ```bash
 composer require magna-cms/seo
-```
-
-```bash
 php artisan magna:plugin:enable magna-cms/seo
 ```
 
-Plugin migrations are not picked up by a bare `php artisan migrate` — point it at
-the plugin:
+You can also enable it from **Admin → Plugins** instead of the second command.
+Enabling the plugin runs its migrations. A bare `php artisan migrate` does not pick
+them up, so if you ever need to run them by hand, point it at the plugin:
 
 ```bash
 php artisan migrate --path=vendor/magna-cms/seo/database/migrations
@@ -173,15 +174,15 @@ already made.
 
 | Command | What it does |
 |---|---|
-| `seo:scan` | Run the static site scan. `--queue` dispatches it instead |
-| `seo:analyse <source> <id>` | Score one page and print its checks |
+| `seo:scan` | Run the static site scan. `--queue` dispatches it instead; `--strict` exits non-zero when any issue is found |
+| `seo:analyse <source> <id>` | Score one page and print its checks (`--keyword=` sets the focus keyword) |
 | `seo:analyse --all` | Score every page and store the results |
-| `seo:scorecard` | Verify the site is SEO-correct by construction |
-| `seo:robots` | Print the generated `robots.txt` |
-| `seo:redirects` | Import, export and audit redirects |
-| `seo:indexnow` | Flush the IndexNow submission queue |
-| `seo:bing` | Submit URLs to Bing Webmaster |
-| `seo:import` | Import meta from another SEO plugin |
+| `seo:scorecard` | Check the technical-SEO invariants every Magna site should meet |
+| `seo:robots` | Take over `robots.txt` by moving a static `public/robots.txt` aside (`--restore` puts it back) |
+| `seo:redirects <import\|export> <file>` | Import or export redirect rules as CSV |
+| `seo:indexnow` | Submit all indexable URLs to IndexNow |
+| `seo:bing` | Submit indexable URLs to Bing Webmaster Tools |
+| `seo:import <file>` | Import SEO meta from a WordPress WXR export (Yoast, Rank Math, AIOSEO, SEOPress); `--apply` writes it |
 
 ## Permissions
 
@@ -190,8 +191,10 @@ already made.
 
 ## Public routes
 
-`/robots.txt` · `/sitemap.xml` · `/sitemap-{source}.xml` · `/llms.txt` ·
-`/llms-full.txt` · site-verification files
+`/robots.txt` · `/sitemap.xml` · `/sitemap-{source}.xml` (and paginated
+`/sitemap-{source}-{page}.xml`) · `/llms.txt` · `/llms-full.txt` ·
+`/seo/redirect-hint` (redirect lookup for headless frontends) · the IndexNow key
+file (`/{key}.txt`)
 
 ---
 
@@ -221,6 +224,8 @@ Register it from your plugin's `boot()`, guarded so your plugin still runs with
 SEO absent:
 
 ```php
+use Magna\Seo\Registry\SeoSourceRegistry;
+
 if (class_exists(SeoSourceRegistry::class)) {
     $this->app->afterResolving(
         SeoSourceRegistry::class,
@@ -247,7 +252,7 @@ Full detail in [`docs/integration.md`](docs/integration.md).
 | [`docs/admin.md`](docs/admin.md) | The admin screens |
 | [`docs/headless.md`](docs/headless.md) | SEO in the delivery API |
 | [`docs/schema.md`](docs/schema.md) | Structured data and the `@graph` |
-| [`docs/tokens.md`](docs/tokens.md) | Template tokens, and registering your own |
+| [`docs/tokens.md`](docs/tokens.md) | Template tokens |
 | [`docs/ai-platforms.md`](docs/ai-platforms.md) | `llms.txt` and AI crawler policy |
 
 ---
@@ -268,9 +273,11 @@ is *not* done.
 - [ ] **No HTTP crawler.** The scan is static — it reads the database, never the
       live site. Broken external links, real response codes, mixed content and
       redirect chains *as actually served* are therefore invisible to it.
-- [ ] **No internal-linking graph.** Orphan detection exists as a scan check, but
-      there are no inbound-link counts, no suggested parents and no equity view.
-- [ ] **Core Web Vitals** are not collected. No PSI or CrUX field data.
+- [ ] **No internal-linking graph.** Orphan detection exists as a scan check and the
+      editor suggests pages to link to, but there are no inbound-link counts, no
+      suggested parents and no equity view.
+- [ ] **Core Web Vitals** come only from CrUX field data (optional API key, pages
+      with enough traffic). No PageSpeed Insights lab data.
 - [ ] **Integration with `magna-cms/pages` is untested** against the real plugin;
       URL resolution currently runs through a config-driven resolver.
 
@@ -293,12 +300,15 @@ Rank tracking is deliberately excluded: it needs paid SERP data.
 
 ## Testing
 
+The tests run inside a Magna CMS checkout, with this plugin checked out at
+`plugins-dev/magna-cms/seo`. From the Magna root:
+
 ```bash
-php artisan test
+php artisan test plugins-dev/magna-cms/seo/tests
 ```
 
-687 tests, 2 242 assertions. PHPStan level 8 and Pint, both clean.
+Static analysis is PHPStan level 8 (`phpstan.neon`), and code style is Pint.
 
-## Licence
+## License
 
 MIT. See [LICENSE](LICENSE).
