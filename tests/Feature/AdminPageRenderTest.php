@@ -42,7 +42,7 @@ final class AdminPageRenderTest extends PluginTestCase
     {
         parent::setUp();
         $this->enablePlugin('magna-cms/seo');
-        $this->enablePlugin('magna/docs');
+        $this->enablePlugin('magna-cms/docs');
         config()->set('seo.robots.static_path', __DIR__.'/no-robots.txt');
 
         $this->actingAs($this->operator());

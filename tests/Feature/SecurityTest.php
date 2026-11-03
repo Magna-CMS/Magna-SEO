@@ -17,6 +17,10 @@ use Magna\Seo\Tests\Support\FakeSeoSubjectSource;
 use Magna\Settings\UrlSettings;
 use Magna\Testing\PluginTestCase;
 
+// The root project never loads a path package's autoload-dev, so the
+// suite pulls its own fixture in rather than relying on the host's wiring.
+require_once dirname(__DIR__).'/Support/FakeSeoSubjectSource.php';
+
 /**
  * The S10 security pass, as executable assertions rather than a checklist.
  *

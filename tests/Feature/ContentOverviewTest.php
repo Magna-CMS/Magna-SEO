@@ -14,6 +14,10 @@ use Magna\Seo\Support\SeoMetaRepository;
 use Magna\Seo\Tests\Support\FakeSeoSubjectSource;
 use Magna\Testing\PluginTestCase;
 
+// The root project never loads a path package's autoload-dev, so the
+// suite pulls its own fixture in rather than relying on the host's wiring.
+require_once dirname(__DIR__).'/Support/FakeSeoSubjectSource.php';
+
 /**
  * Phase 3: every indexable page in one filterable list, with the two fields most
  * often missing editable in place.

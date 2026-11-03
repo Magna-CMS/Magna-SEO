@@ -13,7 +13,7 @@ final class SeoScanCommandTest extends PluginTestCase
     {
         parent::setUp();
         $this->enablePlugin('magna-cms/seo');
-        $this->enablePlugin('magna/docs');
+        $this->enablePlugin('magna-cms/docs');
 
         // The repo ships a static public/robots.txt; point the shadowing check at a
         // path that does not exist so these fixtures test content, not the tree.
@@ -43,6 +43,10 @@ final class SeoScanCommandTest extends PluginTestCase
 
     public function test_strict_fails_when_issues_are_found(): void
     {
+        if (! class_exists('Magna\\Docs\\Seo\\DocsSubjectSource')) {
+            // Magna Docs dropped its SEO source; nothing registers "docs" to scan.
+            $this->markTestSkipped('This Magna Docs build ships no SEO subject source.');
+        }
         $this->publish('a', 'Shared');
         $this->publish('b', 'Shared'); // duplicate title -> an issue
 

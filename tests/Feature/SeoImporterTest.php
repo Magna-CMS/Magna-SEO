@@ -15,7 +15,7 @@ final class SeoImporterTest extends PluginTestCase
     {
         parent::setUp();
         $this->enablePlugin('magna-cms/seo');
-        $this->enablePlugin('magna/docs');
+        $this->enablePlugin('magna-cms/docs');
     }
 
     private function target(): DocPage

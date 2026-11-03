@@ -17,13 +17,17 @@ use Magna\Seo\Subjects\SeoSubject;
 use Magna\Seo\Tests\Support\FakeSeoSubjectSource;
 use Magna\Testing\PluginTestCase;
 
+// The root project never loads a path package's autoload-dev, so the
+// suite pulls its own fixture in rather than relying on the host's wiring.
+require_once dirname(__DIR__).'/Support/FakeSeoSubjectSource.php';
+
 final class ScorecardTest extends PluginTestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
         $this->enablePlugin('magna-cms/seo');
-        $this->enablePlugin('magna/docs');
+        $this->enablePlugin('magna-cms/docs');
     }
 
     private function passed(Scorecard $card, string $id): bool

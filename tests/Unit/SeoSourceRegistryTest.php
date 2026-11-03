@@ -14,6 +14,10 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
 use Psr\Log\NullLogger;
 
+// The root project never loads a path package's autoload-dev, so the
+// suite pulls its own fixture in rather than relying on the host's wiring.
+require_once dirname(__DIR__).'/Support/FakeSeoSubjectSource.php';
+
 final class SeoSourceRegistryTest extends TestCase
 {
     private function subject(string $id): SeoSubject

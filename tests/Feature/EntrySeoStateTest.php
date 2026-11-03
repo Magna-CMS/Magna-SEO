@@ -15,7 +15,7 @@ final class EntrySeoStateTest extends PluginTestCase
     {
         parent::setUp();
         $this->enablePlugin('magna-cms/seo');
-        $this->enablePlugin('magna/docs');
+        $this->enablePlugin('magna-cms/docs');
     }
 
     private function record(): DocPage
