@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Magna\Seo\Filament;
 
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -16,6 +18,7 @@ use Filament\Schemas\Components\View;
 use Illuminate\Database\Eloquent\Model;
 use Magna\Content\Entry;
 use Magna\Seo\Integrations\SearchConsole;
+use Magna\Seo\Schema\Nodes\SoftwareApplicationNodeFactory;
 use Magna\Seo\Support\EntrySeoState;
 use Magna\Seo\Url\EntryUrlResolver;
 
@@ -92,8 +95,50 @@ final class EntrySeoFields
                     Text::make(fn (?Model $record): string => self::searchConsoleSummary($record))
                         ->visible(fn (): bool => app(SearchConsole::class)->isConfigured())
                         ->columnSpanFull(),
+
+                    self::softwareApplication(),
                 ]),
         ];
+    }
+
+    /**
+     * Structured data for a page that describes an app (a product home page, a
+     * download page). Collapsed and empty by default: it emits nothing until an
+     * app name is filled in. There is no rating field on purpose — see
+     * SoftwareApplicationNodeFactory.
+     */
+    private static function softwareApplication(): Section
+    {
+        $categories = array_combine(
+            SoftwareApplicationNodeFactory::CATEGORIES,
+            array_map(
+                static fn (string $category): string => trim((string) preg_replace('/(?<!^)[A-Z]/', ' $0', $category)),
+                SoftwareApplicationNodeFactory::CATEGORIES,
+            ),
+        );
+
+        return Section::make('Structured data: software application')
+            ->description('Fill this in on the pages that describe your app, usually the home and download pages. Use the same app name on each so search engines see one app.')
+            ->collapsed()
+            ->columns(2)
+            ->columnSpanFull()
+            ->schema([
+                TextInput::make('seo_app_name')->label('App name')->maxLength(120)->dehydrated(false),
+                Select::make('seo_app_category')->label('Category')->options($categories)->dehydrated(false),
+                TagsInput::make('seo_app_alternate_names')->label('Other names')->helperText('Up to five, e.g. "Acme billing".')->dehydrated(false),
+                TagsInput::make('seo_app_operating_systems')->label('Operating systems')->helperText('e.g. Android, Windows')->dehydrated(false),
+                TextInput::make('seo_app_version')->label('Version')->maxLength(40)->dehydrated(false),
+                TextInput::make('seo_app_download_url')->label('Download URL')->helperText('A path such as /download, or a full https URL.')->maxLength(2000)->dehydrated(false),
+                Textarea::make('seo_app_offers')
+                    ->label('Prices')
+                    ->helperText('One per line: name | price | currency, e.g. "Free | 0 | INR". Only real prices — a price search engines cannot find on the page is a policy violation.')
+                    ->rows(3)
+                    ->dehydrated(false)
+                    ->columnSpanFull(),
+                TagsInput::make('seo_app_features')->label('Features')->helperText('Short phrases, up to 30.')->dehydrated(false)->columnSpanFull(),
+                TagsInput::make('seo_app_languages')->label('Languages')->helperText('Language codes, e.g. en, hi, ta.')->dehydrated(false),
+                TextInput::make('seo_app_screenshot')->label('Screenshot URL')->maxLength(2000)->dehydrated(false),
+            ]);
     }
 
     /**

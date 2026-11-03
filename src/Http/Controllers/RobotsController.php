@@ -21,8 +21,11 @@ use Magna\Seo\Settings\SeoSettings;
  * conflates three different trades. See {@see AiCrawlers}.
  *
  * NOTE: a static public/robots.txt is served by the web server before PHP runs
- * and shadows this route. The `seo:robots` command backs that file out so this
- * endpoint can take effect.
+ * and shadows this route. The `seo:robots` command, or the button on the SEO
+ * settings screen, backs that file out so this endpoint can take effect.
+ *
+ * The Sitemap line is absolute (the protocol requires it) and built from the
+ * host the crawler asked, which is the host that serves the sitemap index.
  */
 final class RobotsController
 {

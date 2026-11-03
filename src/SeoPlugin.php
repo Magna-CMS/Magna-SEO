@@ -8,6 +8,7 @@ use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schedule;
 use Livewire\Livewire;
 use Magna\Content\Events\EntryCreated;
@@ -21,6 +22,7 @@ use Magna\Contracts\ExtendsEntryTable;
 use Magna\Contracts\RegistersAdminResources;
 use Magna\Contracts\RegistersCommands;
 use Magna\Contracts\RegistersSettingsPages;
+use Magna\Frontend\Events\PublicContentChanged;
 use Magna\Plugins\Plugin;
 use Magna\Seo\Analysis\AnalysisCache;
 use Magna\Seo\Analysis\Checks\ContentLengthCheck;
@@ -100,13 +102,16 @@ use Magna\Seo\Schema\Nodes\FaqNodeFactory;
 use Magna\Seo\Schema\Nodes\HowToNodeFactory;
 use Magna\Seo\Schema\Nodes\IdentityNodeFactory;
 use Magna\Seo\Schema\Nodes\ImageNodeFactory;
+use Magna\Seo\Schema\Nodes\SoftwareApplicationNodeFactory;
 use Magna\Seo\Schema\Nodes\WebPageNodeFactory;
 use Magna\Seo\Schema\Nodes\WebSiteNodeFactory;
 use Magna\Seo\Schema\SchemaGraphBuilder;
 use Magna\Seo\Scorecard\Scorecard;
+use Magna\Seo\Settings\SeoSettings;
 use Magna\Seo\Sitemap\SitemapGenerator;
 use Magna\Seo\Support\RequestContext;
 use Magna\Seo\Url\EntryUrlResolver;
+use Magna\Settings\Events\SettingsSaved;
 use Magna\Settings\UrlSettings;
 
 /**
@@ -189,12 +194,38 @@ class SeoPlugin extends Plugin implements DecoratesDeliveryResponse, ExtendsEntr
 
         $this->scheduleScan();
 
+        // An override or a site setting is baked into every rendered head, and a
+        // renderer caches whole pages. SEO cannot flush another plugin's cache,
+        // so it says what changed through core's event and the renderer decides.
         $purge = function (): void {
             $this->app->make(PurgeGeneratedFiles::class)->purge();
+            $this->announcePublicChange();
         };
 
         SeoMeta::saved($purge);
         SeoMeta::deleted($purge);
+
+        // Settings, too, whatever screen or command wrote them: the llms.txt
+        // summary, the logo, the verification token all end up in public output.
+        if (class_exists(SettingsSaved::class)) {
+            Event::listen(SettingsSaved::class, function (SettingsSaved $event) use ($purge): void {
+                if ($event->group === SeoSettings::group()) {
+                    $purge();
+                }
+            });
+        }
+    }
+
+    /**
+     * Tell whichever plugin caches public pages that every one of them is stale.
+     * Guarded: the event arrived in core 1.6.2, and this plugin still runs on
+     * older cores, where there is nothing to tell.
+     */
+    private function announcePublicChange(): void
+    {
+        if (class_exists(PublicContentChanged::class)) {
+            event(PublicContentChanged::all('magna-cms/seo'));
+        }
     }
 
     /**
@@ -362,8 +393,10 @@ class SeoPlugin extends Plugin implements DecoratesDeliveryResponse, ExtendsEntr
                 new ImageNodeFactory,
                 new FaqNodeFactory,
                 new HowToNodeFactory,
+                new SoftwareApplicationNodeFactory,
             ],
             (string) UrlSettings::get()->frontend_url,
+            $app->make(SocialImageResolver::class),
         ));
 
         // Scoped so the site-default social image is resolved at most once per

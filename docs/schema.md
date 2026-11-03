@@ -17,16 +17,51 @@ published it and the `ImageObject` it uses.
 | `ImageObject` | The subject has a social image. |
 | `FAQPage` | The source supplied `raw['faq']`. |
 | `HowTo` | The source supplied `raw['howto']`. |
+| `SoftwareApplication` | The page's SEO override names an app. See below. |
 
 ## `@id` scheme
 
 ```
 {base}/#website          the site
 {base}/#identity         the organisation or person behind it
+{base}/#logo             the organisation's logo (an ImageObject)
+{base}/#software-{name}  an app the site describes, one per app name
 {canonical}#webpage      this page
 {canonical}#article      the article on it
 {canonical}#primaryimage its image
 ```
+
+## Site identity
+
+`WebSite` carries `name` from the site name and `alternateName` from the
+*Alternate site name* setting — search engines read both when choosing the name
+shown above a result. `Organization` carries `logo` as an `ImageObject` with the
+width and height from the media library, and `image` pointing at it. A person has
+no logo; the setting is ignored for one.
+
+## SoftwareApplication
+
+Opt-in per page, from the entry editor's *Structured data: software application*
+section, stored under `schema_overrides['software_application']`:
+
+| Key | Becomes | Rule |
+| --- | --- | --- |
+| `name` | `name` | required, 120 characters; without it nothing is emitted |
+| `alternate_names` | `alternateName` | up to 5 |
+| `application_category` | `applicationCategory` | one of Google's categories |
+| `application_subcategory` | `applicationSubCategory` | 120 characters |
+| `operating_systems` | `operatingSystem` | joined with commas |
+| `software_version` | `softwareVersion` | 40 characters |
+| `download_url`, `install_url`, `screenshot` | same, camel-cased | http(s) or root-relative only |
+| `offers` | `offers` | each needs a decimal `price` and an ISO 4217 `currency` |
+| `in_language` | `inLanguage` | language tags |
+| `feature_list` | `featureList` | up to 30 |
+
+Anything else in the array is ignored. The `@id` comes from the app name, so the
+home page and the download page describe one app. There is no `aggregateRating`
+or `review`: Google shows software stars only for real ratings, and one a site
+writes about itself breaks its guidelines. The validator flags one if it ever
+appears.
 
 ## Article subtypes
 

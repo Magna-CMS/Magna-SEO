@@ -47,7 +47,11 @@ class SeoSettings extends Settings
     /** Organisation display name (used when knowledge_graph_type = organization). */
     public string $organization_name = '';
 
-    /** Media path to the organisation logo for Organization schema. */
+    /**
+     * The organisation logo for Organization schema: a media id (ULID), which
+     * is what the settings screen stores, or — for installs configured before
+     * the picker existed — a public-disk path or an absolute URL.
+     */
     public string $organization_logo = '';
 
     /** Person display name (used when knowledge_graph_type = person). */
@@ -78,6 +82,23 @@ class SeoSettings extends Settings
 
     /** Media id (ULID) of the default social share image, used when a subject has none. */
     public string $default_og_image = '';
+
+    /**
+     * Media id (ULID) of the site icon: a square PNG, 512 px or larger. Emitted
+     * as the icon and apple-touch-icon links on every rendered page, and what
+     * /favicon.ico redirects to once the static file has been handed over.
+     */
+    public string $site_icon = '';
+
+    /**
+     * A second name the site is known by, emitted as the WebSite node's
+     * alternateName ("Lekha billing software" beside "Lekha"). Search engines
+     * read it when choosing the site name shown above a result.
+     */
+    public string $website_alternate_name = '';
+
+    /** Browser UI colour (theme-color meta), as a hex value such as #0B1220. Blank omits it. */
+    public string $theme_color = '';
 
     /** Emit noindex on non-production environments so staging never gets indexed. */
     public bool $noindex_non_production = true;

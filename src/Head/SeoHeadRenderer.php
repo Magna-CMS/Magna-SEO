@@ -40,9 +40,9 @@ final class SeoHeadRenderer
         // one page, and og:image:width/height are exactly what stop a social
         // preview reflowing as the image loads.
         $subject = $this->socialImages->augmentWithDimensions($subject, $override, $settings);
-        $head = $this->resolver->resolve($subject, $override, $settings);
+        $head = $this->resolver->resolve($subject, $override, $settings, $this->socialImages->siteIcon($settings));
 
-        $graph = $this->schema->build($subject, $head, $settings);
+        $graph = $this->schema->build($subject, $head, $settings, $override);
         if ($graph !== null) {
             $head = $head->withJsonLd([$graph]);
         }

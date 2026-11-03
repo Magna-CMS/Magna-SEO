@@ -97,9 +97,19 @@ $head = app(SeoHeadRenderer::class)->render($subject, $override);
 ```
 
 Guard the call with `app()->bound(SeoSourceRegistry::class)` and keep a fallback
-`<head>` for installs without SEO. The docs plugin
-(`plugins-dev/magna-cms/docs/src/Seo/DocsSubjectSource.php`) is a worked example
-of the whole path.
+`<head>` for installs without SEO. Magna Pages (0.8.0-alpha and later,
+`src/Seo/`) is a worked example of the whole path: a source for its sitemap, and
+a head provider that prints this fragment.
+
+When a renderer needs to know which tags it no longer has to print itself, call
+`head()` instead and read the payload: the title is always there, and
+`metaNames['description']`, `alternates`, `links['canonical']` and
+`links['icon']` say the rest. `render()` is just `head()` passed through
+`HeadHtmlRenderer`.
+
+Pass the override when you have one. The schema graph reads
+`schema_overrides` from it (that is where a page's `SoftwareApplication` data
+lives), and without it those nodes are simply not emitted.
 
 Content entries need no work at all: their meta is derived from the delivery
 payload automatically.

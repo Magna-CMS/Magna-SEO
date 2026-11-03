@@ -79,15 +79,22 @@ card renders wrong in the wild. Fallback chain: entity override, featured image,
 first content image, site default.
 
 **Structured data.** One `@graph` with `@id` linking, not five disconnected
-islands: `WebSite` (with `SearchAction`), `Organization` or `Person`, `WebPage`,
-`Article` / `BlogPosting` / `TechArticle` by subject type, `BreadcrumbList`,
-`ImageObject`, and `FAQPage` / `HowTo` when a source supplies them. Validated
-locally against schema.org shapes — no network call on render.
+islands: `WebSite` (with `alternateName` and `SearchAction`), `Organization`
+(with its logo) or `Person`, `WebPage`, `Article` / `BlogPosting` /
+`TechArticle` by subject type, `BreadcrumbList`, `ImageObject`, `FAQPage` /
+`HowTo` when a source supplies them, and `SoftwareApplication` on the pages an
+editor marks up as describing an app — never with a rating the site wrote about
+itself. Validated locally against schema.org shapes — no network call on render.
+
+**Site identity.** Logo, site icon and default share image are picked from the
+media library. The icon becomes the `icon` and `apple-touch-icon` links on every
+page and the target of `/favicon.ico` and `/apple-touch-icon.png`.
 
 **Sitemaps, robots and hreflang.** A sitemap index with per-source children,
 paginated at 5 000 URLs, `lastmod` from real content change, image entries, gzip
-and tagged-cache purge. `robots.txt` generated with a static-file conflict check.
-Reciprocal hreflang across translations.
+and tagged-cache purge. `robots.txt` generated with a static-file conflict check,
+and static `robots.txt` / `favicon.ico` files handed over from the settings
+screen with no terminal needed. Reciprocal hreflang across translations.
 
 **Redirects and 404s.** Exact and regex matching (regex capture groups usable as
 `$1`, `$2`, …), 301/302/307/308, query preservation, loop and chain detection, and a logged 404 list you can turn
@@ -178,7 +185,7 @@ already made.
 | `seo:analyse <source> <id>` | Score one page and print its checks (`--keyword=` sets the focus keyword) |
 | `seo:analyse --all` | Score every page and store the results |
 | `seo:scorecard` | Check the technical-SEO invariants every Magna site should meet |
-| `seo:robots` | Take over `robots.txt` by moving a static `public/robots.txt` aside (`--restore` puts it back) |
+| `seo:robots` | Take over `robots.txt` and `favicon.ico` by moving the static files in `public/` aside (`--restore` puts them back). The settings screen has the same button |
 | `seo:redirects <import\|export> <file>` | Import or export redirect rules as CSV |
 | `seo:indexnow` | Submit all indexable URLs to IndexNow |
 | `seo:bing` | Submit indexable URLs to Bing Webmaster Tools |
@@ -191,7 +198,8 @@ already made.
 
 ## Public routes
 
-`/robots.txt` · `/sitemap.xml` · `/sitemap-{source}.xml` (and paginated
+`/robots.txt` · `/favicon.ico` and `/apple-touch-icon.png` (redirect to the
+site icon) · `/sitemap.xml` · `/sitemap-{source}.xml` (and paginated
 `/sitemap-{source}-{page}.xml`) · `/llms.txt` · `/llms-full.txt` ·
 `/seo/redirect-hint` (redirect lookup for headless frontends) · the IndexNow key
 file (`/{key}.txt`)
@@ -278,8 +286,9 @@ is *not* done.
       suggested parents and no equity view.
 - [ ] **Core Web Vitals** come only from CrUX field data (optional API key, pages
       with enough traffic). No PageSpeed Insights lab data.
-- [ ] **Integration with `magna-cms/pages` is untested** against the real plugin;
-      URL resolution currently runs through a config-driven resolver.
+- [x] **Integration with `magna-cms/pages`** — Pages 0.8.0-alpha registers a
+      `pages` source and prints this plugin's head through its document-head
+      contract; see the Pages README.
 
 ### Roadmap
 

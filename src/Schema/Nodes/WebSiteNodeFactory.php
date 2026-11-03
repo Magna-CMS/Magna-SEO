@@ -30,6 +30,11 @@ final class WebSiteNodeFactory implements SchemaNodeFactory
             $node['name'] = $context->settings->site_name;
         }
 
+        $alternate = trim($context->settings->website_alternate_name);
+        if ($alternate !== '') {
+            $node['alternateName'] = $alternate;
+        }
+
         if ($context->hasIdentity) {
             $node['publisher'] = ['@id' => $context->identityId];
         }

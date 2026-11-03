@@ -17,7 +17,9 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Magna\Media\Media;
 use Magna\Seo\Integrations\SearchConsole;
+use Magna\Seo\Robots\StaticFileTakeover;
 use Magna\Seo\Settings\SeoSettings;
 use UnitEnum;
 
@@ -71,7 +73,11 @@ class SeoSettingsPage extends Page implements HasForms
             'twitter_site' => $settings->twitter_site,
             'twitter_card_type' => $settings->twitter_card_type,
             'search_url_template' => $settings->search_url_template,
-            'default_og_image' => $settings->default_og_image,
+            'default_og_image' => $settings->default_og_image !== '' ? $settings->default_og_image : null,
+            'organization_logo' => $settings->organization_logo !== '' ? $settings->organization_logo : null,
+            'site_icon' => $settings->site_icon !== '' ? $settings->site_icon : null,
+            'website_alternate_name' => $settings->website_alternate_name,
+            'theme_color' => $settings->theme_color,
             'noindex_non_production' => $settings->noindex_non_production,
             'indexnow_key' => $settings->indexnow_key,
             'indexnow_auto_submit' => $settings->indexnow_auto_submit,
@@ -110,6 +116,15 @@ class SeoSettingsPage extends Page implements HasForms
                             ->label('Title separator')
                             ->helperText('Rendered for the %%sep%% token.')
                             ->maxLength(5),
+                        TextInput::make('website_alternate_name')
+                            ->label('Alternate site name')
+                            ->helperText('Another name people search for, e.g. "Acme billing software" beside "Acme". Emitted as the WebSite alternateName.')
+                            ->maxLength(120),
+                        TextInput::make('theme_color')
+                            ->label('Browser theme colour')
+                            ->helperText('Hex, e.g. #0B1220. Tints the address bar on phones. Leave blank to omit.')
+                            ->regex('/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/')
+                            ->maxLength(9),
                         TextInput::make('default_title_template')
                             ->label('Default title template')
                             ->helperText('Tokens: %%title%% %%sitename%% %%sep%% %%excerpt%%')
@@ -159,11 +174,13 @@ class SeoSettingsPage extends Page implements HasForms
                             ->label('Social profile URLs')
                             ->helperText('Absolute URLs, emitted as schema sameAs.')
                             ->columnSpanFull(),
-                        TextInput::make('default_og_image')
-                            ->label('Default social image (media id)')
-                            ->helperText('Media library id used when a page has no image of its own.')
-                            ->columnSpanFull()
-                            ->maxLength(64),
+                        self::mediaSelect('organization_logo', 'Organization logo')
+                            ->helperText('A square PNG, 512 × 512 or larger. Emitted as the Organization logo search engines show beside your name.'),
+                        self::mediaSelect('site_icon', 'Site icon')
+                            ->helperText('A square PNG, 512 × 512 or larger. Becomes the browser tab icon, the phone home-screen icon and /favicon.ico.'),
+                        self::mediaSelect('default_og_image', 'Default social image')
+                            ->helperText('Shown when a page with no image of its own is shared. 1200 × 630 PNG or JPEG, under 300 KB so WhatsApp shows it.')
+                            ->columnSpanFull(),
                     ]),
 
                 Section::make('Indexing')
@@ -279,6 +296,10 @@ class SeoSettingsPage extends Page implements HasForms
             : '';
         $settings->search_url_template = $string('search_url_template');
         $settings->default_og_image = $string('default_og_image');
+        $settings->organization_logo = $string('organization_logo');
+        $settings->site_icon = $string('site_icon');
+        $settings->website_alternate_name = $string('website_alternate_name');
+        $settings->theme_color = $string('theme_color');
         $settings->noindex_non_production = (bool) ($data['noindex_non_production'] ?? false);
         $settings->indexnow_key = $string('indexnow_key');
         $settings->indexnow_auto_submit = (bool) ($data['indexnow_auto_submit'] ?? false);
@@ -311,10 +332,93 @@ class SeoSettingsPage extends Page implements HasForms
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('takeOverStaticFiles')
+                ->label('Let SEO serve robots.txt and favicon.ico')
+                ->icon('heroicon-o-arrow-path-rounded-square')
+                ->color('gray')
+                // Only while a static file is actually in the way.
+                ->visible(fn (): bool => (new StaticFileTakeover)->pending() !== [])
+                ->authorize(fn (): bool => auth()->user()?->can('seo.settings.manage') ?? false)
+                // A Filament modal, never a browser confirm() dialog.
+                ->requiresConfirmation()
+                ->modalHeading('Let SEO serve robots.txt and favicon.ico?')
+                ->modalDescription(fn (): string => 'The web server answers '.implode(' and ', (new StaticFileTakeover)->pending())
+                    .' from static files in public/, so this plugin\'s versions never run. They will be renamed to *.magna-backup, not deleted. '
+                    .'Running "php artisan seo:robots --restore" puts them back.')
+                ->modalSubmitActionLabel('Hand them over')
+                ->action(fn () => $this->takeOverStaticFiles()),
             Action::make('save')
                 ->label('Save settings')
                 ->icon('heroicon-o-check')
                 ->action(fn () => $this->save()),
         ];
+    }
+
+    public function takeOverStaticFiles(): void
+    {
+        abort_unless(auth()->user()?->can('seo.settings.manage') ?? false, 403);
+
+        $outcomes = (new StaticFileTakeover)->takeOver();
+        $moved = array_keys(array_filter($outcomes, static fn (string $outcome): bool => $outcome === 'moved'));
+        $stuck = array_keys(array_filter($outcomes, static fn (string $outcome): bool => in_array($outcome, ['kept', 'failed'], true)));
+
+        if ($stuck !== []) {
+            Notification::make()
+                ->title('Could not hand over '.implode(' and ', $stuck).'.')
+                ->body('A backup already exists, or public/ is not writable. Nothing was deleted.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        Notification::make()
+            ->title($moved === [] ? 'Nothing to hand over.' : 'SEO now serves '.implode(' and ', $moved).'.')
+            ->success()
+            ->send();
+    }
+
+    /**
+     * A searchable picker over the media library's raster images.
+     *
+     * Every non-blank value gets a label, so a value the picker did not produce
+     * — a deleted image's id, or a path typed into the old free-text logo field —
+     * still validates and the rest of the form can be saved around it.
+     */
+    private static function mediaSelect(string $name, string $label): Select
+    {
+        $describe = static fn (Media $media): string => $media->original_filename
+            .(($media->width !== null && $media->height !== null) ? " — {$media->width} × {$media->height}" : '')
+            .' — '.number_format($media->size / 1024).' KB';
+
+        $images = static fn () => Media::query()
+            ->where('mime_type', 'like', 'image/%')
+            ->where('mime_type', '!=', 'image/svg+xml')
+            ->latest()
+            ->limit(50);
+
+        return Select::make($name)
+            ->label($label)
+            ->searchable()
+            ->native(false)
+            ->options(static fn (): array => $images()->get()->mapWithKeys(
+                static fn (Media $media): array => [$media->id => $describe($media)],
+            )->all())
+            ->getSearchResultsUsing(static fn (string $search): array => $images()
+                ->where(static fn ($query) => $query
+                    ->where('original_filename', 'like', '%'.$search.'%')
+                    ->orWhere('alt', 'like', '%'.$search.'%'))
+                ->get()
+                ->mapWithKeys(static fn (Media $media): array => [$media->id => $describe($media)])
+                ->all())
+            ->getOptionLabelUsing(static function (mixed $value) use ($describe): ?string {
+                if (! is_string($value) || trim($value) === '') {
+                    return null;
+                }
+
+                $media = Media::query()->whereKey($value)->first();
+
+                return $media instanceof Media ? $describe($media) : 'Not in the media library: '.$value;
+            });
     }
 }

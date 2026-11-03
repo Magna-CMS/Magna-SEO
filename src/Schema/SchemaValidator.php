@@ -36,6 +36,7 @@ final class SchemaValidator
         'BreadcrumbList' => ['itemListElement'],
         'FAQPage' => ['mainEntity'],
         'HowTo' => ['name', 'step'],
+        'SoftwareApplication' => ['name'],
     ];
 
     /**
@@ -134,6 +135,22 @@ final class SchemaValidator
                     $errors[] = 'FAQPage has a question without a name or an accepted answer.';
                     break;
                 }
+            }
+        }
+
+        if ($type === 'SoftwareApplication') {
+            $offers = $node['offers'] ?? [];
+            foreach (is_array($offers) ? $offers : [] as $offer) {
+                if (! is_array($offer) || ! is_string($offer['price'] ?? null) || ! is_string($offer['priceCurrency'] ?? null)) {
+                    $errors[] = 'SoftwareApplication has an offer without a price or a currency.';
+                    break;
+                }
+            }
+
+            // Self-written ratings are spam in Google's eyes; the factory never
+            // emits one, so one appearing here came from somewhere it should not.
+            if (isset($node['aggregateRating']) || isset($node['review'])) {
+                $errors[] = 'SoftwareApplication carries a rating or review the site wrote about itself.';
             }
         }
 

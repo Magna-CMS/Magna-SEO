@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Magna\Seo\Media;
 
+use Illuminate\Support\Facades\Storage;
 use Magna\Media\Media;
 use Magna\Media\MediaUrlResolver;
 use Magna\Seo\Models\SeoMeta;
@@ -27,6 +28,14 @@ final class SocialImageResolver
     private ?SeoImage $siteDefault = null;
 
     private bool $siteDefaultResolved = false;
+
+    private ?SeoImage $logo = null;
+
+    private bool $logoResolved = false;
+
+    private ?SeoImage $icon = null;
+
+    private bool $iconResolved = false;
 
     public function __construct(
         private readonly MediaUrlResolver $urls,
@@ -108,5 +117,59 @@ final class SocialImageResolver
         }
 
         return $this->siteDefault;
+    }
+
+    /**
+     * The organisation logo for structured data, or null when none is set.
+     *
+     * The settings screen stores a media id. Installs that typed a path or a
+     * URL into the old free-text setting keep working: a public-disk path or an
+     * absolute http(s) URL is used as given, without dimensions.
+     */
+    public function siteLogo(SeoSettings $settings): ?SeoImage
+    {
+        if (! $this->logoResolved) {
+            $this->logo = $this->fromReference($settings->organization_logo);
+            $this->logoResolved = true;
+        }
+
+        return $this->logo;
+    }
+
+    /** The site icon, or null when none is set. Memoised like the other site-wide images. */
+    public function siteIcon(SeoSettings $settings): ?SeoImage
+    {
+        if (! $this->iconResolved) {
+            $this->icon = $this->fromId($settings->site_icon);
+            $this->iconResolved = true;
+        }
+
+        return $this->icon;
+    }
+
+    private function fromReference(string $reference): ?SeoImage
+    {
+        $reference = trim($reference);
+        if ($reference === '') {
+            return null;
+        }
+
+        if (preg_match('/^[0-9A-HJKMNP-TV-Z]{26}$/i', $reference) === 1) {
+            return $this->fromId($reference);
+        }
+
+        $scheme = strtolower((string) parse_url($reference, PHP_URL_SCHEME));
+        if (in_array($scheme, ['http', 'https'], true)) {
+            return new SeoImage(url: $reference);
+        }
+
+        // Any other scheme (javascript:, data:) is refused rather than emitted.
+        if ($scheme !== '' || str_starts_with($reference, '//')) {
+            return null;
+        }
+
+        return new SeoImage(url: str_starts_with($reference, '/')
+            ? url($reference)
+            : Storage::disk('public')->url($reference));
     }
 }

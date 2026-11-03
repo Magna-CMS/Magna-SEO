@@ -7,11 +7,19 @@ use Magna\Seo\Http\Controllers\IndexNowKeyController;
 use Magna\Seo\Http\Controllers\LlmsTxtController;
 use Magna\Seo\Http\Controllers\RedirectHintController;
 use Magna\Seo\Http\Controllers\RobotsController;
+use Magna\Seo\Http\Controllers\SiteIconController;
 use Magna\Seo\Http\Controllers\SitemapController;
 
 // SEO owns these public URLs explicitly so they win over any renderer plugin's
 // catch-all and work on a headless or docs-only install.
 Route::get('/robots.txt', RobotsController::class)->name('seo.robots');
+
+// The root icons clients fetch without reading the page head. Both redirect to
+// the site icon from SEO settings, or 404 when none is set. A static file in
+// public/ still wins until it is handed over (seo:robots, or the settings
+// screen's button).
+Route::get('/favicon.ico', SiteIconController::class)->name('seo.favicon');
+Route::get('/apple-touch-icon.png', SiteIconController::class)->name('seo.apple-touch-icon');
 
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('seo.sitemap.index');
 

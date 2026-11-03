@@ -29,7 +29,11 @@ final class MetaResolver
         private readonly int $descriptionLength = 155,
     ) {}
 
-    public function resolve(SeoSubject $subject, ?SeoMeta $override, SeoSettings $settings): HeadPayload
+    /**
+     * $siteIcon is resolved by the caller because it costs a media lookup and
+     * this class stays query-free; a render passes it, the delivery list does not.
+     */
+    public function resolve(SeoSubject $subject, ?SeoMeta $override, SeoSettings $settings, ?SeoImage $siteIcon = null): HeadPayload
     {
         $tokens = $this->tokens($subject, $settings);
 
@@ -53,12 +57,24 @@ final class MetaResolver
             $names[$name] = $content;
         }
 
+        $themeColor = trim($settings->theme_color);
+        if (preg_match('/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/', $themeColor) === 1) {
+            $names['theme-color'] = $themeColor;
+        }
+
         $properties = $this->openGraph($subject, $override, $settings, $title, $description, $canonical, $image);
         $this->twitter($names, $override, $settings, $title, $description, $subject->socialImage('twitter'));
 
         $links = [];
         if ($canonical !== null) {
             $links['canonical'] = $canonical;
+        }
+
+        // One square PNG serves both: browsers scale the icon down, and iOS
+        // scales an apple-touch-icon larger than 180 px down as well.
+        if ($siteIcon !== null && $this->isSafeUrl($siteIcon->url)) {
+            $links['icon'] = $siteIcon->url;
+            $links['apple-touch-icon'] = $siteIcon->url;
         }
 
         return new HeadPayload(

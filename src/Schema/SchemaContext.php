@@ -31,5 +31,14 @@ final readonly class SchemaContext
         public ?string $description,
         public ?SeoImage $image,
         public ?string $imageId,
+        /** The site identity's logo, when one is configured. */
+        public ?SeoImage $logo = null,
+        /**
+         * The per-entity override's schema_overrides, raw. Each factory reads
+         * only its own key and validates what it reads — this is editor input.
+         *
+         * @var array<string, mixed>
+         */
+        public array $schemaOverrides = [],
     ) {}
 }

@@ -69,6 +69,19 @@ Site identity, templates, social defaults, verification tokens, AI crawler
 policy, and the Search Console, Bing and CrUX credentials. Secrets are encrypted
 at rest and never appear in a request body.
 
+The organisation logo, site icon and default social image are searchable pickers
+over the media library's raster images, each showing the file's size and
+dimensions. Aim for a 512 × 512 PNG for the logo and the icon, and a 1200 × 630
+image under 300 KB for the social image (WhatsApp skips larger ones). Saving any
+setting tells the page cache to start over, so a change shows on the next visit.
+
+**Let SEO serve robots.txt and favicon.ico** appears in the header while a
+static `public/robots.txt` or `public/favicon.ico` is in the way — the web server
+answers from those before this plugin can. It renames them to `*.magna-backup`
+(never deletes), after a confirmation; `php artisan seo:robots --restore` puts
+them back. A core update can bring the static files back, in which case the
+button reappears.
+
 The **AI platforms** section is worth reading rather than skimming: the three
 crawler switches are what actually decide whether AI platforms may use the site,
 and blocking AI *search* removes you from assistant answers while blocking

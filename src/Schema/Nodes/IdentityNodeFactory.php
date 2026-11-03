@@ -12,7 +12,9 @@ use Magna\Seo\Schema\SchemaContext;
  * SeoSettings::knowledge_graph_type. Skipped entirely when no name is configured,
  * so the graph never carries an empty, meaningless identity node.
  *
- * The organisation logo needs a media-URL resolver and is added in a later stage.
+ * An organisation's logo is an ImageObject with its own @id, so other nodes
+ * (and other pages' graphs) can point at the same logo rather than repeat it.
+ * A person has no logo; the setting is ignored for one.
  */
 final class IdentityNodeFactory implements SchemaNodeFactory
 {
@@ -41,6 +43,26 @@ final class IdentityNodeFactory implements SchemaNodeFactory
         ));
         if ($sameAs !== []) {
             $node['sameAs'] = $sameAs;
+        }
+
+        $logo = $context->logo;
+        if (! $isPerson && $logo !== null) {
+            $image = [
+                '@type' => 'ImageObject',
+                '@id' => $context->baseUrl.'/#logo',
+                'url' => $logo->url,
+                'contentUrl' => $logo->url,
+            ];
+            if ($logo->width !== null) {
+                $image['width'] = $logo->width;
+            }
+            if ($logo->height !== null) {
+                $image['height'] = $logo->height;
+            }
+            $image['caption'] = $node['name'];
+
+            $node['logo'] = $image;
+            $node['image'] = ['@id' => $image['@id']];
         }
 
         return [$node];

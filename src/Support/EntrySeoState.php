@@ -6,6 +6,7 @@ namespace Magna\Seo\Support;
 
 use Illuminate\Database\Eloquent\Model;
 use Magna\Seo\Analysis\RecordAnalyser;
+use Magna\Seo\Schema\Nodes\SoftwareApplicationNodeFactory;
 
 /**
  * Translates between the SEO editor panel's form state and the magna_seo_meta
@@ -22,6 +23,19 @@ final class EntrySeoState
         'seo_robots_index', 'seo_robots_follow',
         'seo_og_title', 'seo_og_description', 'seo_twitter_card', 'seo_focus_keyword',
         'seo_is_cornerstone',
+        ...self::APP_FIELDS,
+    ];
+
+    /**
+     * The "Software application" structured-data fields, stored under
+     * schema_overrides['software_application'] (see SoftwareApplicationNodeFactory).
+     * List-valued fields travel as lists; offers as one "Name | price | currency"
+     * line each, which is what the editor types.
+     */
+    public const APP_FIELDS = [
+        'seo_app_name', 'seo_app_alternate_names', 'seo_app_category',
+        'seo_app_operating_systems', 'seo_app_version', 'seo_app_download_url',
+        'seo_app_offers', 'seo_app_features', 'seo_app_languages', 'seo_app_screenshot',
     ];
 
     public function __construct(
@@ -50,6 +64,7 @@ final class EntrySeoState
                 'seo_twitter_card' => null,
                 'seo_focus_keyword' => null,
                 'seo_is_cornerstone' => false,
+                ...$this->loadApp(null),
             ];
         }
 
@@ -66,7 +81,95 @@ final class EntrySeoState
             'seo_twitter_card' => $meta->twitter_card,
             'seo_focus_keyword' => $keywords[0] ?? null,
             'seo_is_cornerstone' => $meta->is_cornerstone,
+            ...$this->loadApp($meta->schema_overrides[SoftwareApplicationNodeFactory::KEY] ?? null),
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function loadApp(mixed $app): array
+    {
+        $app = is_array($app) ? $app : [];
+        $list = static fn (mixed $value): array => array_values(array_filter(is_array($value) ? $value : [], 'is_string'));
+        $string = static fn (mixed $value): ?string => is_string($value) && $value !== '' ? $value : null;
+
+        $offers = [];
+        foreach (is_array($app['offers'] ?? null) ? $app['offers'] : [] as $offer) {
+            if (is_array($offer)) {
+                $offers[] = implode(' | ', array_filter([
+                    is_string($offer['name'] ?? null) ? $offer['name'] : '',
+                    is_scalar($offer['price'] ?? null) ? (string) $offer['price'] : '',
+                    is_string($offer['currency'] ?? null) ? $offer['currency'] : '',
+                ], static fn (string $part): bool => $part !== ''));
+            }
+        }
+
+        return [
+            'seo_app_name' => $string($app['name'] ?? null),
+            'seo_app_alternate_names' => $list($app['alternate_names'] ?? null),
+            'seo_app_category' => $string($app['application_category'] ?? null),
+            'seo_app_operating_systems' => $list($app['operating_systems'] ?? null),
+            'seo_app_version' => $string($app['software_version'] ?? null),
+            'seo_app_download_url' => $string($app['download_url'] ?? null),
+            'seo_app_offers' => $offers === [] ? null : implode("\n", $offers),
+            'seo_app_features' => $list($app['feature_list'] ?? null),
+            'seo_app_languages' => $list($app['in_language'] ?? null),
+            'seo_app_screenshot' => $string($app['screenshot'] ?? null),
+        ];
+    }
+
+    /**
+     * The panel's software-application fields as the stored shape, or null when
+     * no app name was given — a node without a name is not emitted, so storing
+     * the rest would only be clutter.
+     *
+     * @param  array<string, mixed>  $state
+     * @return array<string, mixed>|null
+     */
+    private function saveApp(array $state): ?array
+    {
+        $name = $this->clean($state, 'seo_app_name');
+        if ($name === null) {
+            return null;
+        }
+
+        $list = static fn (mixed $value): array => array_values(array_filter(
+            array_map(static fn (mixed $item): string => is_string($item) ? trim($item) : '', is_array($value) ? $value : []),
+            static fn (string $item): bool => $item !== '',
+        ));
+
+        $offers = [];
+        foreach (preg_split('/\R/', (string) ($state['seo_app_offers'] ?? '')) ?: [] as $line) {
+            $parts = array_map('trim', explode('|', $line));
+            if (count($parts) === 1 && $parts[0] === '') {
+                continue;
+            }
+
+            // "Free | 0 | INR", or "0 | INR" for an unnamed offer.
+            if (count($parts) === 2) {
+                array_unshift($parts, '');
+            }
+
+            $offers[] = array_filter([
+                'name' => $parts[0],
+                'price' => $parts[1] ?? '',
+                'currency' => strtoupper($parts[2] ?? ''),
+            ], static fn (string $value): bool => $value !== '');
+        }
+
+        return array_filter([
+            'name' => $name,
+            'alternate_names' => $list($state['seo_app_alternate_names'] ?? null),
+            'application_category' => $this->clean($state, 'seo_app_category'),
+            'operating_systems' => $list($state['seo_app_operating_systems'] ?? null),
+            'software_version' => $this->clean($state, 'seo_app_version'),
+            'download_url' => $this->clean($state, 'seo_app_download_url'),
+            'offers' => $offers,
+            'feature_list' => $list($state['seo_app_features'] ?? null),
+            'in_language' => $list($state['seo_app_languages'] ?? null),
+            'screenshot' => $this->clean($state, 'seo_app_screenshot'),
+        ], static fn (mixed $value): bool => $value !== null && $value !== []);
     }
 
     /**
@@ -96,6 +199,18 @@ final class EntrySeoState
             'is_cornerstone' => $cornerstone,
         ];
 
+        $existing = $this->repository->forModel($record);
+
+        // Other keys in schema_overrides belong to other features (or to a
+        // newer version of this one); only the app key is this panel's to write.
+        $overrides = is_array($existing?->schema_overrides) ? $existing->schema_overrides : [];
+        unset($overrides[SoftwareApplicationNodeFactory::KEY]);
+        $app = $this->saveApp($state);
+        if ($app !== null) {
+            $overrides[SoftwareApplicationNodeFactory::KEY] = $app;
+        }
+        $attributes['schema_overrides'] = $overrides === [] ? null : $overrides;
+
         $isBlank = $index && $follow && ! $cornerstone
             && $attributes['title'] === null
             && $attributes['description'] === null
@@ -103,9 +218,10 @@ final class EntrySeoState
             && $attributes['og_title'] === null
             && $attributes['og_description'] === null
             && $attributes['twitter_card'] === null
-            && $attributes['focus_keywords'] === null;
+            && $attributes['focus_keywords'] === null
+            && $attributes['schema_overrides'] === null;
 
-        if ($isBlank && $this->repository->forModel($record) === null) {
+        if ($isBlank && $existing === null) {
             return;
         }
 

@@ -88,4 +88,44 @@ final class EntrySeoStateTest extends PluginTestCase
         $this->assertSame('Only One', $this->state()->load($one)['seo_title']);
         $this->assertNull($this->state()->load($two)['seo_title']);
     }
+
+    public function test_the_software_application_fields_round_trip_through_schema_overrides(): void
+    {
+        $page = $this->record();
+        $repository = $this->app->make(SeoMetaRepository::class);
+
+        // Something else already keeps data in schema_overrides; it must survive.
+        $repository->upsert($page->getMorphClass(), (string) $page->getKey(), ['schema_overrides' => ['other' => ['kept' => true]]]);
+
+        $this->state()->save($page, [
+            'seo_app_name' => 'Acme',
+            'seo_app_alternate_names' => ['Acme billing'],
+            'seo_app_category' => 'FinanceApplication',
+            'seo_app_operating_systems' => ['Android', 'Windows'],
+            'seo_app_download_url' => '/download',
+            'seo_app_offers' => "Free | 0 | inr\n499 | INR\n\n",
+        ]);
+
+        $stored = $repository->forModel($page)?->schema_overrides;
+        $this->assertSame(['kept' => true], $stored['other'] ?? null);
+        $this->assertSame([
+            'name' => 'Acme',
+            'alternate_names' => ['Acme billing'],
+            'application_category' => 'FinanceApplication',
+            'operating_systems' => ['Android', 'Windows'],
+            'download_url' => '/download',
+            'offers' => [
+                ['name' => 'Free', 'price' => '0', 'currency' => 'INR'],
+                ['price' => '499', 'currency' => 'INR'],
+            ],
+        ], $stored['software_application'] ?? null);
+
+        $loaded = $this->state()->load($page);
+        $this->assertSame('Acme', $loaded['seo_app_name']);
+        $this->assertSame("Free | 0 | INR\n499 | INR", $loaded['seo_app_offers']);
+
+        // Clearing the name removes the app, and only the app.
+        $this->state()->save($page, ['seo_app_name' => '']);
+        $this->assertSame(['other' => ['kept' => true]], $repository->forModel($page)?->schema_overrides);
+    }
 }
