@@ -166,7 +166,7 @@ final class ContentOverview
         return match ($filter) {
             self::FILTER_NEEDS_WORK => is_int($row['seoScore']) && $row['seoScore'] < AnalysisReport::NEEDS_WORK_BELOW,
             self::FILTER_NO_DESCRIPTION => trim((string) $row['description']) === '',
-            self::FILTER_NO_KEYWORD => trim((string) $row['keyword']) === '',
+            self::FILTER_NO_KEYWORD => $row['indexable'] && trim((string) $row['keyword']) === '',
             self::FILTER_NOINDEX => $row['indexable'] === false,
             default => true,
         };
