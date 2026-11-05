@@ -236,4 +236,24 @@ final class ScanReportingTest extends PluginTestCase
         $this->assertArrayHasKey('coffee beans', $report['cannibalised']);
         $this->assertCount(2, $report['cannibalised']['coffee beans']);
     }
+
+    public function test_keyword_coverage_leaves_out_pages_an_editor_marked_noindex(): void
+    {
+        $registry = $this->app->make(SeoSourceRegistry::class);
+        $repository = $this->app->make(SeoMetaRepository::class);
+
+        $registry->register(new FakeSeoSubjectSource('pages', [
+            'a' => $this->subject('a')->subject,
+            'b' => $this->subject('b')->subject,
+        ], modelClass: DocPage::class));
+
+        $repository->upsert(DocPage::class, 'a', ['robots_index' => false]);
+        $repository->upsert(DocPage::class, 'b', ['robots_follow' => false]);
+
+        $report = (new KeywordCoverage($registry, $repository))->report();
+
+        // 'a' is out of the count; 'b' stays, because nofollow is not noindex.
+        $this->assertSame(1, $report['total']);
+        $this->assertSame('https://site.test/b', $report['uncovered'][0]['url']);
+    }
 }

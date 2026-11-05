@@ -23,12 +23,14 @@ final class RecordAnalyser
      * @param  list<string>  $titleFields
      * @param  list<string>  $excerptFields
      * @param  list<string>  $bodyFields
+     * @param  list<string>  $blockFields  Stored block documents, for records with no body field.
      */
     public function __construct(
         private readonly ContentAnalyser $analyser,
         private readonly array $titleFields,
         private readonly array $excerptFields,
         private readonly array $bodyFields,
+        private readonly array $blockFields = [],
     ) {}
 
     public function analyse(Model $record, string $keyword, ?string $seoTitle, ?string $seoDescription): AnalysisReport
@@ -45,7 +47,7 @@ final class RecordAnalyser
                 ? trim($seoDescription)
                 : ($this->firstString($record, $this->excerptFields) ?? ''),
             slug: (string) ($record->getAttribute('slug') ?? ''),
-            plainText: $this->plainText($html),
+            plainText: $html !== '' ? $this->plainText($html) : $this->blockText($record),
             html: $html,
         );
 
@@ -66,6 +68,25 @@ final class RecordAnalyser
         }
 
         return null;
+    }
+
+    /**
+     * A builder page keeps its text in a block document, not a body column.
+     * Nothing goes to `html`: stored blocks are not the rendered markup, so the
+     * structural checks say so rather than judging a page by a guess at it.
+     */
+    private function blockText(Model $record): string
+    {
+        foreach ($this->blockFields as $field) {
+            $document = $record->getAttribute($field);
+            $text = is_array($document) ? BlockText::from($document) : '';
+
+            if ($text !== '') {
+                return $text;
+            }
+        }
+
+        return '';
     }
 
     private function plainText(string $html): string

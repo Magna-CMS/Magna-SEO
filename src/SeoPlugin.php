@@ -477,6 +477,7 @@ class SeoPlugin extends Plugin implements DecoratesDeliveryResponse, ExtendsEntr
                 $strings($config->get('seo.entry.title_fields')),
                 $strings($config->get('seo.entry.excerpt_fields')),
                 $strings($config->get('seo.entry.body_fields')),
+                $strings($config->get('seo.entry.block_fields')),
             );
         });
 

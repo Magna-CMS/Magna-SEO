@@ -111,9 +111,21 @@ final class ContentOverviewTest extends PluginTestCase
 
         $this->assertCount(1, $overview->rows(ContentOverview::FILTER_NEEDS_WORK));
         $this->assertCount(2, $overview->rows(ContentOverview::FILTER_NO_DESCRIPTION));
-        $this->assertCount(2, $overview->rows(ContentOverview::FILTER_NO_KEYWORD));
+        // The noindex page needs no keyword, so only one of the two is listed.
+        $this->assertCount(1, $overview->rows(ContentOverview::FILTER_NO_KEYWORD));
         $this->assertCount(1, $overview->rows(ContentOverview::FILTER_NOINDEX));
         $this->assertCount(3, $overview->rows(ContentOverview::FILTER_ALL));
+    }
+
+    public function test_an_editor_noindex_page_is_not_asked_for_a_keyword(): void
+    {
+        $overview = $this->overview();
+
+        $this->repository()->upsert(DocPage::class, 'alpha', ['robots_index' => false]);
+
+        $keys = array_column($overview->rows(ContentOverview::FILTER_NO_KEYWORD), 'modelId');
+
+        $this->assertNotContains('alpha', $keys);
     }
 
     public function test_an_editor_noindex_shows_even_when_the_content_is_published(): void

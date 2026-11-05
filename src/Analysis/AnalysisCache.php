@@ -119,6 +119,7 @@ final class AnalysisCache
             $subject,
             $head->metaNames['description'] ?? '',
             is_array($keywords) ? (string) ($keywords[0] ?? '') : '',
+            $meta?->title,
         ));
     }
 }

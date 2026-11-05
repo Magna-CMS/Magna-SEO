@@ -106,6 +106,12 @@ final class KeywordCoverage
                         ? ($overrides[$this->meta->key($modelClass, $subject->modelId)] ?? null)
                         : null;
 
+                    // An editor's noindex takes the page out of the question: nobody
+                    // needs a keyword for a page search engines are told to skip.
+                    if ($meta?->getAttribute('robots_index') === false) {
+                        continue;
+                    }
+
                     $keywords = $meta === null ? [] : ($meta->focus_keywords ?? []);
 
                     $rows[] = [$subject, array_values(array_filter(

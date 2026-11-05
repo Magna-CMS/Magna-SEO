@@ -20,6 +20,8 @@ return [
         'title_fields' => ['title', 'name', 'heading'],
         'excerpt_fields' => ['excerpt', 'summary', 'description', 'dek', 'subtitle'],
         'body_fields' => ['body', 'content', 'text'],
+        // Stored block documents, read for analysis when no body field has text.
+        'block_fields' => ['blocks_data'],
         'image_fields' => ['og_image', 'featured_image', 'image', 'cover', 'thumbnail'],
 
         /*

@@ -41,8 +41,10 @@ final readonly class AnalysisInput
      * A source that wants the structural checks to run supplies its body markup
      * as `raw['html']`; without it those checks report "not available" rather
      * than guessing from stripped text.
+     *
+     * @param  string|null  $title  The SEO title override, which is what gets published.
      */
-    public static function forSubject(SeoSubject $subject, string $description, string $keyword): self
+    public static function forSubject(SeoSubject $subject, string $description, string $keyword, ?string $title = null): self
     {
         $path = (string) parse_url($subject->url, PHP_URL_PATH);
         $slug = ($path !== '' && $path !== '/') ? basename($path) : '';
@@ -50,7 +52,7 @@ final readonly class AnalysisInput
 
         return new self(
             keyword: trim($keyword),
-            title: $subject->title,
+            title: $title !== null && trim($title) !== '' ? trim($title) : $subject->title,
             description: $description,
             slug: $slug,
             plainText: $subject->plainText,
