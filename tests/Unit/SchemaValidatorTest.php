@@ -77,6 +77,22 @@ final class SchemaValidatorTest extends TestCase
         $this->assertSame([], $errors);
     }
 
+    public function test_a_reference_to_a_node_defined_inside_another_node_resolves(): void
+    {
+        $errors = $this->validator()->validate($this->graph([
+            [
+                '@type' => 'Organization',
+                '@id' => 'https://e.test/#identity',
+                'name' => 'Acme',
+                'url' => 'https://e.test',
+                'logo' => ['@type' => 'ImageObject', '@id' => 'https://e.test/#logo', 'url' => 'https://cdn/l.png'],
+                'image' => ['@id' => 'https://e.test/#logo'],
+            ],
+        ]));
+
+        $this->assertSame([], $errors);
+    }
+
     public function test_it_flags_an_faq_question_without_an_answer(): void
     {
         $errors = $this->validator()->validate($this->graph([

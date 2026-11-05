@@ -169,7 +169,23 @@ final class SchemaValidator
     {
         $dangling = [];
 
-        $walk = function (mixed $value) use (&$walk, $ids, &$dangling): void {
+        // JSON-LD defines a node wherever it appears, so an Organization's nested
+        // logo is a valid target for a pointer elsewhere in the graph.
+        $define = function (mixed $value) use (&$define, &$ids): void {
+            if (! is_array($value)) {
+                return;
+            }
+
+            if (is_string($value['@id'] ?? null) && array_keys($value) !== ['@id']) {
+                $ids[$value['@id']] = true;
+            }
+
+            foreach ($value as $child) {
+                $define($child);
+            }
+        };
+
+        $walk = function (mixed $value) use (&$walk, &$ids, &$dangling): void {
             if (! is_array($value)) {
                 return;
             }
@@ -184,6 +200,10 @@ final class SchemaValidator
                 $walk($child);
             }
         };
+
+        foreach ($nodes as $node) {
+            $define($node);
+        }
 
         foreach ($nodes as $node) {
             foreach (is_array($node) ? $node : [] as $value) {
