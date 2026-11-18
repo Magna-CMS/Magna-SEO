@@ -196,4 +196,71 @@ final class BuilderPageScoresTest extends PluginTestCase
         $this->assertNotNull($report);
         $this->assertSame('The focus keyword appears in the title.', $this->resultFor($report, 'keyword-in-title'));
     }
+
+    /**
+     * @param  array<string, mixed>  $raw
+     */
+    private function pageSubject(array $raw): SeoSubject
+    {
+        return new SeoSubject(
+            key: 'fake:2',
+            type: SubjectType::Page,
+            url: 'https://site.test/pricing',
+            title: 'Pricing',
+            locale: 'en',
+            indexable: true,
+            updatedAt: new \DateTimeImmutable,
+            plainText: str_repeat('Billing software keeps every bill safe. ', 40),
+            raw: $raw,
+            modelId: '2',
+        );
+    }
+
+    public function test_a_scan_scores_the_search_title_a_source_publishes(): void
+    {
+        app(SeoMetaRepository::class)->upsert(User::class, '2', ['focus_keywords' => ['billing software']]);
+
+        $report = app(AnalysisCache::class)->refresh(
+            $this->pageSubject(['meta_title' => 'Billing software pricing: free plan and paid plans']),
+            User::class,
+        );
+
+        $this->assertNotNull($report);
+        $this->assertSame('The focus keyword appears in the title.', $this->resultFor($report, 'keyword-in-title'));
+        $this->assertStringNotContainsString('short', $this->resultFor($report, 'title-length'));
+    }
+
+    public function test_an_seo_override_still_beats_the_sources_search_title(): void
+    {
+        app(SeoMetaRepository::class)->upsert(User::class, '2', [
+            'title' => 'Plans and prices',
+            'focus_keywords' => ['billing software'],
+        ]);
+
+        $report = app(AnalysisCache::class)->refresh(
+            $this->pageSubject(['meta_title' => 'Billing software pricing: free plan and paid plans']),
+            User::class,
+        );
+
+        $this->assertNotNull($report);
+        $this->assertSame('Add the focus keyword to the title.', $this->resultFor($report, 'keyword-in-title'));
+    }
+
+    public function test_a_save_scores_the_records_own_search_title_and_description(): void
+    {
+        $report = app(RecordAnalyser::class)->analyse(
+            $this->record([
+                'title' => 'Pricing',
+                'meta_title' => 'Billing software pricing: free plan and paid plans',
+                'meta_description' => 'Billing software for Indian shops, free forever, with paid plans when you grow.',
+                'blocks_data' => $this->document(),
+            ]),
+            'billing software',
+            null,
+            null,
+        );
+
+        $this->assertSame('The focus keyword appears in the title.', $this->resultFor($report, 'keyword-in-title'));
+        $this->assertStringContainsString('appears', $this->resultFor($report, 'keyword-in-description'));
+    }
 }

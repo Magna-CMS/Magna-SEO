@@ -472,10 +472,11 @@ class SeoPlugin extends Plugin implements DecoratesDeliveryResponse, ExtendsEntr
                 array_filter(is_array($value) ? $value : [], 'is_string'),
             );
 
+            // Search title and description first: they are what gets published.
             return new RecordAnalyser(
                 $app->make(ContentAnalyser::class),
-                $strings($config->get('seo.entry.title_fields')),
-                $strings($config->get('seo.entry.excerpt_fields')),
+                [...$strings($config->get('seo.entry.search_title_fields')), ...$strings($config->get('seo.entry.title_fields'))],
+                [...$strings($config->get('seo.entry.search_description_fields')), ...$strings($config->get('seo.entry.excerpt_fields'))],
                 $strings($config->get('seo.entry.body_fields')),
                 $strings($config->get('seo.entry.block_fields')),
             );

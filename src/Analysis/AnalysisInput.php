@@ -42,17 +42,28 @@ final readonly class AnalysisInput
      * as `raw['html']`; without it those checks report "not available" rather
      * than guessing from stripped text.
      *
-     * @param  string|null  $title  The SEO title override, which is what gets published.
+     * The title scored is the one that gets published: the SEO override first,
+     * then a search title the source carries as `raw['meta_title']` (a page's
+     * meta_title, printed verbatim), then the subject's own title.
+     *
+     * @param  string|null  $title  The SEO title override.
      */
     public static function forSubject(SeoSubject $subject, string $description, string $keyword, ?string $title = null): self
     {
         $path = (string) parse_url($subject->url, PHP_URL_PATH);
         $slug = ($path !== '' && $path !== '/') ? basename($path) : '';
         $html = $subject->raw['html'] ?? null;
+        $sourceTitle = $subject->raw['meta_title'] ?? null;
+
+        $published = match (true) {
+            $title !== null && trim($title) !== '' => trim($title),
+            is_string($sourceTitle) && trim($sourceTitle) !== '' => trim($sourceTitle),
+            default => $subject->title,
+        };
 
         return new self(
             keyword: trim($keyword),
-            title: $title !== null && trim($title) !== '' ? trim($title) : $subject->title,
+            title: $published,
             description: $description,
             slug: $slug,
             plainText: $subject->plainText,
