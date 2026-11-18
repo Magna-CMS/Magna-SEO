@@ -83,6 +83,7 @@ your sitemap. With it, overrides are bulk-loaded one query per chunk.
 | Key | Effect |
 | --- | --- |
 | `html` | Body markup. Enables the structural analysis checks (headings, links, alt text) and the orphan-page scan. |
+| `meta_title` | The full search title your source publishes in place of `title`. Content analysis scores it when no SEO override is set. |
 | `schema_type` | A more precise Article subtype: `NewsArticle`, `TechArticle`, … |
 | `faq` | `[['question' => …, 'answer' => …], …]` — emits a `FAQPage` node. |
 | `howto` | `['name' => …, 'steps' => [...]]` — emits a `HowTo` node. |

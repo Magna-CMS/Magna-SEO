@@ -22,6 +22,11 @@ return [
         'body_fields' => ['body', 'content', 'text'],
         // Stored block documents, read for analysis when no body field has text.
         'block_fields' => ['blocks_data'],
+        // A record's own search title and description, which a page prints
+        // verbatim. Analysis checks these before the fields above, so it scores
+        // what is published.
+        'search_title_fields' => ['meta_title'],
+        'search_description_fields' => ['meta_description'],
         'image_fields' => ['og_image', 'featured_image', 'image', 'cover', 'thumbnail'],
 
         /*
